@@ -1,0 +1,50 @@
+[package]
+name = "superacc_zkp"
+version = "0.1.0"
+edition = "2021"
+description = "Reorganized Superacc ZKP toolkit derived from the rust_gcn project."
+license = "MIT"
+readme = "README.md"
+
+[dependencies]
+num-traits = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tempfile = "3.21"
+
+# Optional dependencies for additional features
+tch = { version = "0.8", optional = true }
+ndarray = { version = "0.15", optional = true }
+
+# Zero-knowledge proof stack
+curve25519-dalek = { version = "4.0", optional = true }
+libspartan = { path = "../spartan", package = "spartan", optional = true }
+rand = { version = "0.8", optional = true }
+half = { version = "2.0", optional = true, features = ["num-traits"] }
+rand_chacha = { version = "0.3", optional = true }
+sha3 = { version = "0.10", optional = true }
+
+[features]
+default = ["gcn-only"]
+gcn-only = []
+pytorch = ["tch"]
+ndarray = ["dep:ndarray"]
+zkp = [
+    "curve25519-dalek",
+    "libspartan",
+    "rand",
+    "rand_chacha",
+    "half",
+    "sha3",
+]
+full = ["gcn-only", "pytorch", "ndarray", "zkp"]
+manual_examples = []
+
+[[bin]]
+name = "gcn_inference"
+path = "src/main.rs"
+
+[[bin]]
+name = "gcn_full_feature"
+path = "experiments/gcn_full_feature.rs"
+required-features = ["zkp"]
