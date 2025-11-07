@@ -1,5 +1,19 @@
 # Release Notes - Superacc ZKP
 
+## Version 0.2.2 (2025-11-08)
+
+### Summary
+- Adds PDF renderings (`overview.pdf`, `GCN.pdf`) plus PNG previews embedded directly in `README.md` so GitHub visitors can see the architecture diagrams without cloning the repo.
+- README intro and experiment sections now avoid referencing specific feature counts so the documentation feels general-purpose.
+
+### Dependencies and Tooling
+- Same as v0.2.1 (Rust 1.74+, CUDA PyTorch helper when needed, Spartan checkout for `zkp`).
+
+### Verification Checklist
+- `cargo fmt`
+- `cargo check`
+- `cargo check --features zkp`
+
 ## Version 0.2.1 (2025-11-08)
 
 ### Summary

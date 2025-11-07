@@ -1,6 +1,6 @@
 [package]
 name = "superacc_zkp"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 description = "High-precision GCN inference and Spartan-based zero-knowledge toolkit for the Superacc ZKP project."
 license = "MIT"
