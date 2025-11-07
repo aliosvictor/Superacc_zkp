@@ -11,6 +11,15 @@
 /results/
 /results_*/
 
+# Embedded PyTorch helper artifacts
+/pygcn_helper/.venv/
+/pygcn_helper/data/
+/pygcn_helper/outputs/
+/pygcn_helper/**/*.pt
+/pygcn_helper/**/__pycache__/
+/pygcn_helper/*.egg-info
+/pygcn_helper/**/flycheck_*
+
 # Local datasets (user-supplied Cora files)
 /data/
 

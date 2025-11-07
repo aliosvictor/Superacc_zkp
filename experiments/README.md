@@ -6,8 +6,8 @@
 ```bash
 RUSTFLAGS="-C target_cpu=native" \
 cargo run --release --features zkp --bin gcn_full_feature \
-  -- --weights-single model_weights/2025-09-01_22-16-26_gcn_best_weights_f32.json \
-     --weights-double model_weights/2025-09-01_22-16-27_gcn_best_weights_f64.json
+  -- --weights-single model_weights/gcn_weights_f32_20251106.json \
+     --weights-double model_weights/gcn_weights_f64_20251106.json
 ```
 > **Resource note:** Running the full pipeline for all precisions requires upwards of 24&ndash;32 GB of RAM. On machines with less memory, reduce the scope, for example:
 > ```bash

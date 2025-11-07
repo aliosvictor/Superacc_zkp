@@ -1,11 +1,12 @@
 # Superacc ZKP
 
-Official reference implementation of the paper "Accurate and Zero-Knowledge Floating-Point Arithmetic for Graph Neural Network Inference." A high-performance graph convolution network (GCN) inference and zero-knowledge proof (ZKP) toolkit written in Rust. This project reorganizes the original `rust_gcn` workspace into a streamlined structure suitable for public release, retaining the full 1433-dimensional Cora workload and the Spartan-based ZKP pipeline.
+The Official reference implementation of the paper "Accurate and Zero-Knowledge Floating-Point Arithmetic for Graph Neural Network Inference." A high-performance graph convolution network (GCN) inference and zero-knowledge proof (ZKP) toolkit written in Rust. This project reorganizes the original `rust_gcn` workspace into a streamlined structure suitable for public release, retaining the full 1433-dimensional Cora workload and the Spartan-based ZKP pipeline.
 
 ## Highlights
 - **GCN inference parity** with PyTorch/PyGCN using safe, zero-copy Rust data structures.
 - **End-to-end ZKP workflow** for the complete Cora configuration leveraging Spartan primitives.
 - **Deterministic math kernels** for dense and sparse operations with optional ZKP instrumentation.
+- **Companion PyTorch pipeline** (`pygcn_helper/`) to retrain Cora GCN weights when needed.
 - **Modular layout** that keeps data loaders, model logic, math utilities, and ZKP gadgets cleanly separated.
 
 ## Directory Structure
@@ -17,6 +18,7 @@ Superacc_zkp/
 |-- .gitignore
 |-- data/               # create this directory locally for the Cora dataset (see instructions below)
 |-- model_weights/        # example JSON weight exports from PyTorch
+|-- pygcn_helper/         # embedded PyTorch training toolkit (fork of pygcn)
 |-- src/                  # library crate (data, layers, math, models, ZKP)
 |-- experiments/          # gcn_full_feature.rs experiment binary
 |-- docs/                 # high level architecture notes
@@ -26,33 +28,57 @@ Superacc_zkp/
 
 ## Prerequisites
 - Rust toolchain 1.74+ (`rustup` recommended)
+- System packages that expose `pkg-config` and OpenSSL development headers (required when enabling `zkp` or `pytorch`)
 - The Cora dataset files (`cora.content` and `cora.cites`) stored locally under `data/cora` (not included in the repository)
-- Optional: local checkout of `spartan` if the `zkp` feature is enabled; update `Cargo.toml` to reference the location of your Spartan checkout.
+- Optional: local checkout of `spartan` if the `zkp` feature is enabled; update the `libspartan` path in `Cargo.toml` to match your checkout.
+
+## Preparing the Spartan Dependency
+Spartan is required for any build that turns on the `zkp` feature. Clone the upstream repository alongside this project or adjust the path dependency to where you keep it:
+```bash
+git clone https://github.com/microsoft/SPARTAN.git ../spartan
+```
+If you prefer a different location, edit the `libspartan` entry in `Cargo.toml` to point to that directory.
+
+Install the native toolchain pieces Spartan expects before building proofs:
+- **Ubuntu / Debian**: `sudo apt-get install pkg-config libssl-dev`
+- **macOS**: `brew install pkg-config openssl@3`
+Make sure your shell can locate the OpenSSL libraries (for example, `export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"` on Apple Silicon).
 
 ## Getting the Cora Dataset
 1. Create the target directory:
    ```bash
    mkdir -p data/cora
    ```
-2. Download the dataset files from the original PyGCN repository:
+2. Use the helper script from the embedded PyTorch project to download the raw files:
    ```bash
-   curl -L -o data/cora/cora.content https://raw.githubusercontent.com/tkipf/pygcn/master/data/cora/cora.content
-   curl -L -o data/cora/cora.cites https://raw.githubusercontent.com/tkipf/pygcn/master/data/cora/cora.cites
+   cd pygcn_helper
+   PYTHONPATH=src python3 -m scripts.download_cora --output-dir ../data/cora
+   cd ..
    ```
-   If the GitHub raw mirrors are unavailable, use one of the fallbacks below:
-   - Clone the reference implementation and copy its dataset:
-     ```bash
-     git clone https://github.com/tkipf/pygcn.git
-     cp pygcn/data/cora/cora.* data/cora/
-     ```
-   - Download the Planetoid archive maintained by LINQS:
-     ```bash
-     curl -L -o cora.tgz https://linqs-data.soe.ucsc.edu/public/lbc/cora.tgz
-     tar -xzf cora.tgz cora/cora.content cora/cora.cites
-     mv cora/cora.* data/cora/
-     rm -rf cora cora.tgz
-     ```
-3. Rerun `cargo run --bin gcn_inference` to verify the loader can find `data/cora`.
+   This script fetches `cora.content` and `cora.cites` from the official Planetoid mirror on GitHub.
+3. If the mirror is unavailable, fall back to the Planetoid archive maintained by LINQS:
+   ```bash
+   curl -L -o cora.tgz https://linqs-data.soe.ucsc.edu/public/lbc/cora.tgz
+   tar -xzf cora.tgz cora/cora.content cora/cora.cites
+   mv cora/cora.* data/cora/
+   rm -rf cora cora.tgz
+   ```
+4. Rerun `cargo run --bin gcn_inference` to verify the loader can find `data/cora`.
+
+## Regenerating Model Weights
+The directory `pygcn_helper/` contains a curated PyTorch training pipeline derived from the original [pygcn](https://github.com/tkipf/pygcn) project. Use it to regenerate float32 and float64 checkpoints and export JSON weights for this repository:
+
+```bash
+cd pygcn_helper
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install --upgrade pip
+pip install -r requirements.txt
+PYTHONPATH=src python3 -m scripts.train_cora --precision f32 --export-json
+PYTHONPATH=src python3 -m scripts.train_cora --precision f64 --export-json  # optional
+```
+
+The JSON files produced in `pygcn_helper/outputs/weights/` can be copied into `model_weights/` before running the Rust experiments. This repository already includes sample exports (`gcn_weights_f32_20251106.json` and `gcn_weights_f64_20251106.json`) generated with the settings above for quick smoke tests.
 
 ## Running the Inference Demo
 ```bash
@@ -65,8 +91,8 @@ The demo loads the Cora dataset, instantiates the GCN with random weights, and p
 ```bash
 RUSTFLAGS="-C target_cpu=native" \
 cargo run --release --features zkp --bin gcn_full_feature \
-  -- --weights-single model_weights/2025-09-01_22-16-26_gcn_best_weights_f32.json \
-     --weights-double model_weights/2025-09-01_22-16-27_gcn_best_weights_f64.json
+  -- --weights-single model_weights/gcn_weights_f32_20251106.json \
+     --weights-double model_weights/gcn_weights_f64_20251106.json
 ```
 Notes:
 - The experiment consumes the full 2708-node, 1433-feature Cora graph by default.

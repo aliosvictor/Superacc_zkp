@@ -1,0 +1,26 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Generated data and outputs
+data/
+outputs/
+
+# Logs and temporary files
+*.log
+*.csv
+*.tmp
+.DS_Store
+Thumbs.db

@@ -93,15 +93,9 @@ impl Default for AppConfig {
                 PrecisionCase::Half,
             ],
             output_prefix: PathBuf::from("./artifacts/gcn_full_feature"),
-            weights_single: PathBuf::from(
-                "model_weights/2025-09-01_22-16-26_gcn_best_weights_f32.json",
-            ),
-            weights_double: PathBuf::from(
-                "model_weights/2025-09-01_22-16-27_gcn_best_weights_f64.json",
-            ),
-            weights_half: PathBuf::from(
-                "model_weights/2025-09-01_22-16-26_gcn_best_weights_f32.json",
-            ),
+            weights_single: PathBuf::from("model_weights/gcn_weights_f32_20251106.json"),
+            weights_double: PathBuf::from("model_weights/gcn_weights_f64_20251106.json"),
+            weights_half: PathBuf::from("model_weights/gcn_weights_f32_20251106.json"),
             verification_level: VerificationLevel::Full,
             feature_limit: None,
         }
