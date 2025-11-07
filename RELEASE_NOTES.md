@@ -1,5 +1,29 @@
 # Release Notes - Superacc ZKP
 
+## Version 0.2.0 (2025-11-07)
+
+### Summary
+- Vendors the PyGCN-G helper directly inside `pygcn_helper/`, eliminating the external dependency on a sibling `pygcn` checkout.
+- Refreshes `README.md`, `INVENTORY.md`, `experiments/README.md`, and helper docs with end-to-end instructions for downloading data, training, and exporting weights.
+- Adds new reference weights (`gcn_weights_f32_20251106.json`, `gcn_weights_f64_20251106.json`) generated via the embedded pipeline and updates defaults in `gcn_full_feature.rs`.
+- Expands `.gitignore` to cover Python virtual environments, caches, and outputs so the repository remains artifact-free.
+
+### Dependencies and Tooling
+- Rust toolchain 1.74 or newer.
+- CUDA-enabled PyTorch 2.5.1 (cu121 wheel) plus `numpy`/`scipy` when running the embedded helper.
+- Spartan checkout still required when enabling the `zkp` feature (path configured in `Cargo.toml`).
+- Dataset download workflow now lives entirely inside `pygcn_helper/`.
+
+### Verification Checklist
+- `cargo fmt`
+- `cargo check --features zkp`
+- `PYTHONPATH=src python -m scripts.download_cora --output-dir data/cora`
+- `PYTHONPATH=src python -m scripts.train_cora --precision f32 --export-json`
+
+### Known Follow-Ups
+- Evaluate packaging the PyGCN-G helper as a separate PyPI module and wiring it through `pip install`.
+- Consider publishing pre-built weight archives and CI workflows once public release is finalized.
+
 ## Version 0.1.0 (2025-11-06)
 
 ### Summary
