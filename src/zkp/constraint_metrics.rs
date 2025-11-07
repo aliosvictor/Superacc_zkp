@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-///
+/// Aggregated statistics describing the size of the generated R1CS instance.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct R1csShapeMetrics {
     pub field_adds: usize,
@@ -11,6 +11,7 @@ pub struct R1csShapeMetrics {
 }
 
 impl R1csShapeMetrics {
+    /// Adds another metric set using saturating arithmetic to avoid overflow.
     pub fn accumulate(&mut self, other: &R1csShapeMetrics) {
         self.field_adds = self.field_adds.saturating_add(other.field_adds);
         self.field_muls = self.field_muls.saturating_add(other.field_muls);
@@ -19,18 +20,21 @@ impl R1csShapeMetrics {
         self.nnz_c = self.nnz_c.saturating_add(other.nnz_c);
     }
 
+    /// Total number of non-zero entries across A, B, and C.
     pub fn total_nnz(&self) -> usize {
         self.nnz_a
             .saturating_add(self.nnz_b)
             .saturating_add(self.nnz_c)
     }
 
+    /// Returns true when no constraints were recorded.
     pub fn is_empty(&self) -> bool {
         self.field_adds == 0 && self.field_muls == 0
     }
 }
 
-///
+/// Computes constraint density metrics from the sparse matrix entries returned
+/// by Spartan's R1CS builder. The counts help reason about prover/verifier cost.
 pub fn compute_r1cs_metrics(
     num_constraints: usize,
     entries_a: &[(usize, usize, [u8; 32])],

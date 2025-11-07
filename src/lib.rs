@@ -1,3 +1,8 @@
+//! Crate entry point that wires together data loading, graph neural network layers,
+//! math utilities, model definitions, typing helpers, and optional ZKP gadgets.
+//! Consumers typically build a `models::gcn::GCN` instance, feed it data from
+//! `data::loader`, and optionally enable `zkp` features for proof generation.
+
 pub mod data;
 pub mod layers;
 pub mod math;

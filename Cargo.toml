@@ -2,7 +2,7 @@
 name = "superacc_zkp"
 version = "0.1.0"
 edition = "2021"
-description = "Reorganized Superacc ZKP toolkit derived from the rust_gcn project."
+description = "High-precision GCN inference and Spartan-based zero-knowledge toolkit for the Superacc ZKP project."
 license = "MIT"
 readme = "README.md"
 

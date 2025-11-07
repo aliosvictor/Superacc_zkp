@@ -2,11 +2,10 @@ use crate::layers::graph_conv::GraphConvolution;
 use crate::math::activations::{log_softmax, relu};
 use crate::types::{DenseMatrix, FloatType, GCNConfig, GCNWeights, SparseMatrix};
 
-///
-///
-/// 1. x = F.relu(self.gc1(x, adj))              -> relu(gc1.forward(x, adj))
-/// 3. x = self.gc2(x, adj)                      -> gc2.forward(x, adj)  
-/// 4. return F.log_softmax(x, dim=1)            -> log_softmax(x, 1)
+/// Two-layer Kipf-Welling style Graph Convolutional Network that mirrors the
+/// reference PyTorch implementation: `relu(gc1(x, adj)) -> gc2(...) -> log_softmax`.
+/// Shape validation is performed before any heavy linear algebra so that
+/// mismatched exports fail fast with actionable errors.
 #[derive(Debug)]
 pub struct GCN<T: FloatType> {
     pub gc1: GraphConvolution<T>,
@@ -15,7 +14,8 @@ pub struct GCN<T: FloatType> {
 }
 
 impl<T: FloatType> GCN<T> {
-    ///
+    /// Creates a zero-initialized model. Useful for tests or placeholder
+    /// construction when weights are assigned later with [`set_weight`](crate::layers::graph_conv::GraphConvolution::set_weight).
     pub fn new(config: GCNConfig) -> Self {
         let gc1 = GraphConvolution::new(config.nfeat, config.nhid, true);
         let gc2 = GraphConvolution::new(config.nhid, config.nclass, true);
@@ -23,9 +23,12 @@ impl<T: FloatType> GCN<T> {
         Self { gc1, gc2, config }
     }
 
+    /// Builds a model from serialized tensors produced by the PyTorch helper.
+    /// Shape assertions prevent accidentally loading weights that target a
+    /// different feature or hidden dimension.
     ///
-    ///   - gc1: [nfeat, nhid] + [nhid] bias
-    ///   - gc2: [nhid, nclass] + [nclass] bias
+    /// * `gc1`: `[nfeat, nhid]` weight plus `[nhid]` bias
+    /// * `gc2`: `[nhid, nclass]` weight plus `[nclass]` bias
     pub fn from_weights(weights: GCNWeights<T>, config: GCNConfig) -> Self {
         assert_eq!(
             weights.gc1_weight.shape,
@@ -75,15 +78,14 @@ impl<T: FloatType> GCN<T> {
         Self { gc1, gc2, config }
     }
 
-    ///
+    /// Executes the full inference pipeline,
+    /// equivalent to the PyTorch snippet:
     ///
     /// ```python
-    /// def forward(self, x, adj):
-    ///     x = F.relu(self.gc1(x, adj))
-    ///     x = self.gc2(x, adj)
-    ///     return F.log_softmax(x, dim=1)
+    /// x = F.relu(self.gc1(x, adj))
+    /// x = self.gc2(x, adj)
+    /// return F.log_softmax(x, dim=1)
     /// ```
-    ///
     pub fn forward(&self, x: &DenseMatrix<T>, adj: &SparseMatrix<T>) -> DenseMatrix<T> {
         let (num_nodes, input_features) = x.shape;
         assert_eq!(
@@ -116,11 +118,8 @@ impl<T: FloatType> GCN<T> {
         log_softmax(&x2, 1)
     }
 
-    ///
-    /// ```python
-    /// output = model(features, adj)
-    /// preds = output.max(1)[1].type_as(labels)
-    /// ```
+    /// Applies argmax to the logits from [`GCN::forward`] and returns one label
+    /// per node, mirroring `output.max(1)[1]` from the PyTorch training loop.
     pub fn predict(&self, x: &DenseMatrix<T>, adj: &SparseMatrix<T>) -> Vec<usize> {
         let output = self.forward(x, adj);
         let (num_nodes, _) = output.shape;
@@ -142,15 +141,9 @@ impl<T: FloatType> GCN<T> {
         predictions
     }
 
-    ///
-    /// ```python
-    /// def accuracy(output, labels):
-    ///     preds = output.max(1)[1].type_as(labels)
-    ///     correct = preds.eq(labels).double()
-    ///     correct = correct.sum()
-    ///     return correct / len(labels)
-    /// ```
-    ///
+    /// Computes accuracy restricted to the indices in `mask`. Each entry of the
+    /// mask selects a node that participates in the metric, matching the helper
+    /// PyTorch script's `accuracy` function.
     pub fn accuracy(
         &self,
         x: &DenseMatrix<T>,
@@ -184,7 +177,8 @@ impl<T: FloatType> GCN<T> {
         }
     }
 
-    ///
+    /// Negative log-likelihood loss averaged over the masked nodes. The values
+    /// align with PyTorch's `NLLLoss` applied to log-softmax outputs.
     pub fn nll_loss(
         &self,
         x: &DenseMatrix<T>,
@@ -216,14 +210,18 @@ impl<T: FloatType> GCN<T> {
         }
     }
 
+    /// Returns the total number of learnt scalars in both graph convolution
+    /// layers, useful for comparing against the PyTorch baseline.
     pub fn num_parameters(&self) -> usize {
         self.gc1.num_parameters() + self.gc2.num_parameters()
     }
 
+    /// Provides read-only access to the configuration used when constructing the model.
     pub fn config(&self) -> &GCNConfig {
         &self.config
     }
 
+    /// Human readable summary similar to PyTorch's `__repr__`, handy for logging.
     pub fn layer_info(&self) -> String {
         format!(
             "GCN(\n  {}\n  {}\n  dropout: {:.2}\n)",

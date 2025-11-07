@@ -1,6 +1,6 @@
 # Superacc ZKP
 
-The Official reference implementation of the paper "Accurate and Zero-Knowledge Floating-Point Arithmetic for Graph Neural Network Inference." A high-performance graph convolution network (GCN) inference and zero-knowledge proof (ZKP) toolkit written in Rust. This project reorganizes the original `rust_gcn` workspace into a streamlined structure suitable for public release, retaining the full 1433-dimensional Cora workload and the Spartan-based ZKP pipeline.
+The Official reference implementation of the paper "Accurate and Zero-Knowledge Floating-Point Arithmetic for Graph Neural Network Inference." A high-performance graph convolution network (GCN) inference and zero-knowledge proof (ZKP) toolkit written in Rust. This project packages the full 1433-dimensional Cora workload together with the Spartan-based ZKP pipeline in a streamlined structure ready for public release.
 
 ## Highlights
 - **GCN inference parity** with PyTorch/PyGCN using safe, zero-copy Rust data structures.
@@ -16,14 +16,13 @@ Superacc_zkp/
 |-- README.md             # this guide
 |-- LICENSE               # MIT license
 |-- .gitignore
-|-- data/               # create this directory locally for the Cora dataset (see instructions below)
+|-- data/                 # create this directory locally for the Cora dataset (see instructions below)
 |-- model_weights/        # example JSON weight exports from PyTorch
 |-- pygcn_helper/         # embedded PyTorch training toolkit (fork of pygcn)
 |-- src/                  # library crate (data, layers, math, models, ZKP)
 |-- experiments/          # gcn_full_feature.rs experiment binary
 |-- docs/                 # high level architecture notes
-|-- INVENTORY.md          # migration notes from the original project
-`-- STRUCTURE_PLAN.md     # target layout rationale
+`-- INVENTORY.md          # migration notes that track structural changes
 ```
 
 ## Prerequisites
@@ -114,7 +113,7 @@ Notes:
 - `cargo check --all-features` verifies both inference and ZKP builds without generating witnesses.
 
 ## Documentation
-Additional architecture notes are available in `docs/architecture.md` describing the module layout, data flow, and ZKP integration strategy. Historical Chinese-language documents from `rust_gcn/docs/zkp` were deliberately omitted to keep the release concise; consult the original repository if you need those archives.
+Additional architecture notes are available in `docs/architecture.md` describing the module layout, data flow, and ZKP integration strategy. Historical Chinese-language documents from earlier internal drafts were deliberately omitted to keep the release concise.
 
 ## License
 Released under the [MIT License](LICENSE).

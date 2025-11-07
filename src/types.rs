@@ -4,6 +4,7 @@ use num_traits::{Float, FromPrimitive, One, Zero};
 use std::{cmp::Ordering, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+/// Floating point precision markers used to annotate operation counters.
 pub enum OperationPrecision {
     Fp16,
     Bf16,
@@ -22,7 +23,9 @@ impl OperationPrecision {
     }
 }
 
-///
+/// Abstraction over the floating point formats supported by the crate.
+/// It extends `num_traits::Float` with helpers used for deterministic
+/// conversions and ZKP precision tracking.
 pub trait FloatType: Float + FromPrimitive + Zero + One + Copy + Debug + Send + Sync {
     fn exp(self) -> Self;
     fn ln(self) -> Self;
@@ -105,8 +108,7 @@ impl FloatType for f16 {
     }
 }
 
-///
-///
+/// Simple row-major dense matrix wrapper used by the inference path.
 #[derive(Debug, Clone)]
 pub struct DenseMatrix<T: FloatType> {
     pub data: Vec<T>,
@@ -114,7 +116,7 @@ pub struct DenseMatrix<T: FloatType> {
 }
 
 impl<T: FloatType> DenseMatrix<T> {
-    ///
+    /// Creates a matrix from data laid out row-major and validates the shape.
     pub fn new(data: Vec<T>, shape: (usize, usize)) -> Self {
         assert_eq!(
             data.len(),
@@ -134,7 +136,7 @@ impl<T: FloatType> DenseMatrix<T> {
         }
     }
 
-    ///
+    /// Returns the value at the given position with bounds checking.
     pub fn get(&self, row: usize, col: usize) -> T {
         assert!(
             row < self.shape.0 && col < self.shape.1,
@@ -152,7 +154,7 @@ impl<T: FloatType> DenseMatrix<T> {
         self.data[row * self.shape.1 + col] = value;
     }
 
-    ///
+    /// Returns an immutable view into a row without copying.
     pub fn get_row(&self, row: usize) -> &[T] {
         let start = row * self.shape.1;
         let end = start + self.shape.1;
@@ -166,10 +168,8 @@ impl<T: FloatType> DenseMatrix<T> {
     }
 }
 
-///
-/// - PyTorch: torch.sparse.FloatTensor -> indices: int64, values: float32
-/// - Rust: SparseMatrix<f32> -> indices: (i64,i64), values: Vec<f32>
-///
+/// COO sparse matrix wrapper that mirrors PyTorch's `torch.sparse.FloatTensor`
+/// layout (`indices`, `values`, `shape`). Used for adjacency matrices.
 #[derive(Debug, Clone)]
 pub struct SparseMatrix<T: FloatType> {
     pub indices: Vec<(i64, i64)>,
@@ -177,7 +177,7 @@ pub struct SparseMatrix<T: FloatType> {
     pub shape: (usize, usize),
 }
 
-///
+/// CSR matrix representation used by the ZKP layer to feed Spartan.
 #[derive(Debug, Clone)]
 pub struct CsrMatrix<T: FloatType> {
     pub row_ptr: Vec<usize>,
@@ -297,10 +297,10 @@ impl<T: FloatType> SparseMatrix<T> {
     }
 }
 
-///
-/// - features: PyTorch torch.float32 [2708, 1433] -> Rust DenseMatrix<f32>
-/// - adj: PyTorch sparse FloatTensor [2708, 2708] -> Rust SparseMatrix<f32>  
-/// - labels: PyTorch torch.int64 [2708] -> Rust Vec<i64>
+/// Container returned by the data loader. Mirrors the tensors produced by PyGCN:
+/// * `features`: `[2708, 1433]` dense float matrix
+/// * `adj`: `[2708, 2708]` sparse matrix in COO form
+/// * `labels`: `[2708]` vector of class ids
 #[derive(Debug)]
 pub struct CoraDataset<T: FloatType> {
     pub features: DenseMatrix<T>,
@@ -311,9 +311,8 @@ pub struct CoraDataset<T: FloatType> {
     pub idx_test: Vec<i64>,
 }
 
-///
-/// - gc1.weight: [1433, 16], gc1.bias: [16]
-/// - gc2.weight: [16, 7], gc2.bias: [7]
+/// Serialized weights exported from the helper training pipeline. The layout
+/// matches PyTorch's default ordering and is consumed by [`GCN::from_weights`](crate::models::gcn::GCN::from_weights).
 #[derive(Debug)]
 pub struct GCNWeights<T: FloatType> {
     pub gc1_weight: DenseMatrix<T>,
@@ -322,6 +321,7 @@ pub struct GCNWeights<T: FloatType> {
     pub gc2_bias: Vec<T>,
 }
 
+/// High-level hyperparameters that describe the shape of the GCN.
 #[derive(Debug, Clone)]
 pub struct GCNConfig {
     pub nfeat: usize,
@@ -341,7 +341,7 @@ impl Default for GCNConfig {
     }
 }
 
-///
+/// Default scalar types used across the crate.
 pub type DefaultFloat = f32;
 pub type DefaultInt = i64;
 

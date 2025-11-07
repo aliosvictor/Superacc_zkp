@@ -1,3 +1,7 @@
+//! Zero-knowledge proof helpers that wrap Spartan gadgets. The module is only
+//! compiled when the `zkp` feature is enabled; otherwise we expose a small
+//! placeholder that guides the user to rebuild with proofs enabled.
+
 #[cfg(feature = "zkp")]
 pub mod utils;
 
@@ -64,6 +68,7 @@ pub mod placeholder {
 #[cfg(not(feature = "zkp"))]
 pub use placeholder::*;
 
+/// Controls verbosity, RNG seeding, and precision used when building proofs.
 #[derive(Debug, Clone)]
 pub struct ZKPConfig {
     pub verbose: bool,
@@ -71,6 +76,7 @@ pub struct ZKPConfig {
     pub precision: ZKPPrecision,
 }
 
+/// Enumerates the floating point widths supported by the proof circuits.
 #[derive(Debug, Clone, Copy)]
 pub enum ZKPPrecision {
     Half,
@@ -94,6 +100,8 @@ impl Default for ZKPPrecision {
     }
 }
 
+/// Human-readable status string describing whether ZKP code is active in the
+/// current build and what gadgets become available.
 pub fn zkp_info() -> String {
     #[cfg(feature = "zkp")]
     {

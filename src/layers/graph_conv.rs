@@ -1,9 +1,9 @@
 use crate::math::{dense_ops, sparse_ops};
 use crate::types::{DenseMatrix, FloatType, SparseMatrix};
 
-///
-/// - weight: torch.Parameter([in_features, out_features], dtype=torch.float32)
-///
+/// Linear graph convolution layer `support = XW`, `output = A * support`
+/// optionally followed by a learnable bias. This mirrors PyGCN's
+/// `GraphConvolution` module in both tensor layout and semantics.
 #[derive(Debug)]
 pub struct GraphConvolution<T: FloatType> {
     pub weight: DenseMatrix<T>,
@@ -13,7 +13,8 @@ pub struct GraphConvolution<T: FloatType> {
 }
 
 impl<T: FloatType> GraphConvolution<T> {
-    ///
+    /// Allocates zero-filled weights (and optionally bias). Call
+    /// [`set_weight`](GraphConvolution::set_weight) afterwards to load real parameters.
     pub fn new(in_features: usize, out_features: usize, bias: bool) -> Self {
         let weight = DenseMatrix::zeros(in_features, out_features);
         let bias = if bias {
@@ -30,8 +31,8 @@ impl<T: FloatType> GraphConvolution<T> {
         }
     }
 
-    ///
-    ///
+    /// Reconstructs the layer from flattened tensors exported by PyTorch.
+    /// Shape assertions ensure mismatches are caught before inference.
     pub fn from_weights(
         weight_data: Vec<T>,
         bias_data: Option<Vec<T>>,
@@ -67,11 +68,8 @@ impl<T: FloatType> GraphConvolution<T> {
         }
     }
 
-    ///
-    ///
-    /// 1. support = torch.mm(input, self.weight)  -> dense_mm(input, weight)
-    /// 2. output = torch.spmm(adj, support)       -> sparse_dense_mm(adj, support)  
-    /// 3. return output + self.bias               -> add_bias(output, bias)
+    /// Computes `support = XW`, `output = A * support`, and applies bias if provided.
+    /// This is semantically identical to PyTorch's dense-plus-sparse execution path.
     pub fn forward(&self, input: &DenseMatrix<T>, adj: &SparseMatrix<T>) -> DenseMatrix<T> {
         let (num_nodes, input_features) = input.shape;
         assert_eq!(
@@ -107,7 +105,7 @@ impl<T: FloatType> GraphConvolution<T> {
         output
     }
 
-    ///
+    /// Parameter count helper used by higher level summaries.
     pub fn num_parameters(&self) -> usize {
         let weight_params = self.in_features * self.out_features;
         let bias_params = self.bias.as_ref().map_or(0, |b| b.len());
@@ -122,17 +120,19 @@ impl<T: FloatType> GraphConvolution<T> {
         self.bias.is_some()
     }
 
-    ///
+    /// Overwrites the layer weight with data shaped `[in_features, out_features]`.
     pub fn set_weight(&mut self, weight_data: Vec<T>) {
         assert_eq!(weight_data.len(), self.in_features * self.out_features);
         self.weight = DenseMatrix::new(weight_data, (self.in_features, self.out_features));
     }
 
+    /// Replaces or installs a bias vector shaped `[out_features]`.
     pub fn set_bias(&mut self, bias_data: Vec<T>) {
         assert_eq!(bias_data.len(), self.out_features);
         self.bias = Some(bias_data);
     }
 
+    /// Removes the bias parameter, matching a bias-less PyTorch layer.
     pub fn remove_bias(&mut self) {
         self.bias = None;
     }

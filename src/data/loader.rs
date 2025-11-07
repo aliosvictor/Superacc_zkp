@@ -4,9 +4,9 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-///
-///
-///
+/// Loads the Cora citation network from the PyGCN text files located under
+/// `data_path`. The routine mirrors the preprocessing carried out by
+/// `pygcn_helper` so weight exports stay consistent between Python and Rust.
 pub fn load_cora_data<T: FloatType>(
     data_path: &str,
 ) -> Result<CoraDataset<T>, Box<dyn std::error::Error>> {
@@ -55,9 +55,9 @@ pub fn load_cora_data<T: FloatType>(
     })
 }
 
-///
-/// <node_id> <feature1> <feature2> ... <feature1433> <label>
-///
+/// Parses the `cora.content` file which stores one node per row in the format
+/// `<node_id> <f1> ... <f1433> <label>`. The features are normalized row-wise
+/// so the sum of each node's feature vector equals 1.
 fn load_features_and_labels<T: FloatType>(
     filepath: &str,
 ) -> Result<(DenseMatrix<T>, Vec<i64>, HashMap<String, usize>), Box<dyn std::error::Error>> {
@@ -138,8 +138,8 @@ fn load_features_and_labels<T: FloatType>(
     Ok((features, labels_data, node_map))
 }
 
-///
-///
+/// Reads `cora.cites`, maps textual node ids to dense indices, and builds the
+/// symmetrized normalized adjacency matrix expected by the GCN.
 fn load_adjacency_matrix<T: FloatType>(
     filepath: &str,
     node_map: &HashMap<String, usize>,
@@ -187,9 +187,9 @@ fn load_adjacency_matrix<T: FloatType>(
     Ok(adj_normalized)
 }
 
-///
-/// adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
-///
+/// Reconstructs an undirected adjacency matrix by inserting reciprocal edges
+/// when necessary. Mirrors the PyGCN hij-symmetric trick shown below:
+/// `adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)`.
 fn build_symmetric_adjacency<T: FloatType>(
     edges: Vec<(usize, usize)>,
     num_nodes: usize,
@@ -215,7 +215,7 @@ fn build_symmetric_adjacency<T: FloatType>(
     SparseMatrix::new(indices, values, (num_nodes, num_nodes))
 }
 
-///
+/// Adds self-loops and performs row-normalization so each row sums to one.
 fn add_self_loops_and_normalize<T: FloatType>(mut adj: SparseMatrix<T>) -> SparseMatrix<T> {
     let num_nodes = adj.shape.0;
 
@@ -231,7 +231,7 @@ fn add_self_loops_and_normalize<T: FloatType>(mut adj: SparseMatrix<T>) -> Spars
     adj
 }
 
-///
+/// Normalizes each feature vector to unit sum to reproduce the PyGCN pipeline.
 fn normalize_features<T: FloatType>(features: &mut DenseMatrix<T>) {
     let (rows, _cols) = features.shape;
 
@@ -250,12 +250,14 @@ fn normalize_features<T: FloatType>(features: &mut DenseMatrix<T>) {
     println!("Feature normalization completed");
 }
 
-///
+/// Implements the sparse row-normalization described in the original PyGCN:
+/// ```
 /// rowsum = np.array(mx.sum(1))
 /// r_inv = np.power(rowsum, -1).flatten()
 /// r_inv[np.isinf(r_inv)] = 0.
 /// r_mat_inv = sp.diags(r_inv)
 /// mx = r_mat_inv.dot(mx)
+/// ```
 fn normalize_adjacency_matrix<T: FloatType>(adj: &mut SparseMatrix<T>) {
     let num_nodes = adj.shape.0;
     let mut row_sums = vec![T::zero(); num_nodes];
@@ -274,7 +276,7 @@ fn normalize_adjacency_matrix<T: FloatType>(adj: &mut SparseMatrix<T>) {
     println!("Adjacency matrix normalization completed");
 }
 
-///
+/// Maps the textual Cora subject labels to compact integer ids used by the model.
 fn encode_cora_label(label: &str) -> Result<i64, Box<dyn std::error::Error>> {
     let label_idx = match label {
         "Case_Based" => 0,

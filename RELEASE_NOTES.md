@@ -27,7 +27,7 @@
 ## Version 0.1.0 (2025-11-06)
 
 ### Summary
-- Publicly packages the reorganized Superacc ZKP workspace derived from the original rust_gcn codebase.
+- Publicly packages the streamlined Superacc ZKP workspace for its first tagged release.
 - Retains only the full 1433-feature Cora workload and associated zero-knowledge proof pipeline.
 - Provides English-only documentation and reproducible experiment instructions without bundling datasets or generated artifacts.
 - Includes reference PyTorch weight exports (`gcn_weights_f32_20251106.json`, `gcn_weights_f64_20251106.json`) generated via the companion PyGCN-G helper for quick validation.

@@ -27,7 +27,7 @@
 
 ## Exclusions in This Release
 - Historical experiment outputs from the legacy workspace are omitted; regenerate fresh artifacts by running the experiment binary.
-- Extensive Chinese-language ZKP documentation remains in the original `rust_gcn` repository and is not bundled here.
+- Extensive Chinese-language ZKP documentation from earlier internal studies is not bundled here.
 
 ## Next Steps
 - Integrate continuous integration to run `cargo fmt`, `cargo clippy`, and `cargo check --all-features` on pull requests.
