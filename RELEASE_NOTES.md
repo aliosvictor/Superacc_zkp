@@ -1,5 +1,20 @@
 # Release Notes - Superacc ZKP
 
+## Version 0.2.1 (2025-11-08)
+
+### Summary
+- Adds comprehensive Rust doc comments across the GCN model, graph convolution layer, data loader, and ZKP helpers so the codebase is self-documenting without referencing the legacy `rust_gcn` tree.
+- Refreshes the crate metadata (`Cargo.toml`) to version `0.2.1` for the documentation-focused release.
+- Keeps the repository artifact-free while reinforcing the workflow described in the README and architecture notes.
+
+### Dependencies and Tooling
+- Same toolchain requirements as v0.2.0: Rust 1.74+, CUDA-enabled PyTorch 2.5.1 (cu121 wheel) when running the helper, and a local Spartan checkout for `zkp` builds.
+
+### Verification Checklist
+- `cargo fmt`
+- `cargo check`
+- `cargo check --features zkp`
+
 ## Version 0.2.0 (2025-11-07)
 
 ### Summary
