@@ -8,6 +8,11 @@ The Official reference implementation of the paper "Accurate and Zero-Knowledge 
 - **Deterministic math kernels** for dense and sparse operations with optional ZKP instrumentation.
 - **Companion PyTorch pipeline** (`pygcn_helper/`) to retrain Cora GCN weights when needed.
 - **Modular layout** that keeps data loaders, model logic, math utilities, and ZKP gadgets cleanly separated.
+- **Figures** located under `Figures/` show the full system overview (`overview.pdf`) and the proof-aware GCN/ZKP flow (`GCN.pdf`).
+
+## Figures
+- `Figures/overview.pdf` captures the end-to-end stack spanning data ingestion, PyTorch retraining, Rust inference, and Spartan-based proof verification.
+- `Figures/GCN.pdf` zooms into the GCN forward pass instrumented for ZKP, showing where dense and sparse math connect to Spartan gadgets.
 
 ## Directory Structure
 ```
