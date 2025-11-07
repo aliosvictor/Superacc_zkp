@@ -1,6 +1,6 @@
 # Superacc ZKP
 
-The Official reference implementation of the paper "Accurate and Zero-Knowledge Floating-Point Arithmetic for Graph Neural Network Inference." A high-performance graph convolution network (GCN) inference and zero-knowledge proof (ZKP) toolkit written in Rust. This project packages the full 1433-dimensional Cora workload together with the Spartan-based ZKP pipeline in a streamlined structure ready for public release.
+The Official reference implementation of the paper "Accurate and Zero-Knowledge Floating-Point Arithmetic for Graph Neural Network Inference." A high-performance graph convolution network (GCN) inference and zero-knowledge proof (ZKP) toolkit written in Rust. This project packages the full Cora workload together with the Spartan-based ZKP pipeline in a streamlined structure ready for public release.
 
 ## Highlights
 - **GCN inference parity** with PyTorch/PyGCN using safe, zero-copy Rust data structures.
@@ -13,6 +13,15 @@ The Official reference implementation of the paper "Accurate and Zero-Knowledge 
 ## Figures
 - `Figures/overview.pdf` captures the end-to-end stack spanning data ingestion, PyTorch retraining, Rust inference, and Spartan-based proof verification.
 - `Figures/GCN.pdf` zooms into the GCN forward pass instrumented for ZKP, showing where dense and sparse math connect to Spartan gadgets.
+
+<p align="center">
+  <img src="Figures/overview.png" alt="Superacc ZKP system overview" width="800">
+</p>
+
+<p align="center">
+  <img src="Figures/GCN.png" alt="Proof-aware GCN pipeline" width="800">
+</p>
+
 
 ## Directory Structure
 ```
@@ -91,7 +100,7 @@ cargo run --bin gcn_inference
 ```
 The demo loads the Cora dataset, instantiates the GCN with random weights, and prints accuracy/loss metrics as a smoke test for the dense/sparse kernels.
 
-## Running the 1433-Dimension ZKP Experiment
+## Running the ZKP Experiment
 ```bash
 RUSTFLAGS="-C target_cpu=native" \
 cargo run --release --features zkp --bin gcn_full_feature \
@@ -99,7 +108,7 @@ cargo run --release --features zkp --bin gcn_full_feature \
      --weights-double model_weights/gcn_weights_f64_20251106.json
 ```
 Notes:
-- The experiment consumes the full 2708-node, 1433-feature Cora graph by default.
+- The experiment consumes the full Cora graph by default.
 - Results (witness statistics, constraint counts, CSV summaries) are written under `./artifacts/gcn_full_feature/`. These outputs are not committed; regenerate them locally as needed.
 - Use `--precision single`, `--precision double`, or `--precision half` to restrict the run to specific numeric precisions.
 - Expect peak memory usage above 24 GB when running the full proof pipeline with all precisions; provision a high-memory machine for production runs. For sanity checks on smaller hosts, cap the workload (for example: `--precision single --verification-level fast --node-limit 128 --feature-limit 256`).
